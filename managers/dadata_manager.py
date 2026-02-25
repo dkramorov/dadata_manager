@@ -67,6 +67,23 @@ class DadataManager:
         r = requests.post(url, headers=self.get_headers(), json={'query': inn_or_ogrn})
         return r.json()
 
+    @staticmethod
+    def get_main_org_from_suggestions(resp: dict):
+        """Находит головной офис в компании
+           :param resp: ответ от дадаты по get_by_inn_or_ogrn
+        """
+        if not isinstance(resp, dict):
+            return None
+        main_org = None
+        for org in resp.get('suggestions', []):
+            # Первая встретившаяся организация как головной офис
+            if not main_org:
+                main_org = org['data']
+            # Главная организация
+            if org['data'].get('branch_type') == 'MAIN':
+                return org['data']
+        return main_org
+
     def search_address(self,
                        query: str,
                        count: int = 10,
