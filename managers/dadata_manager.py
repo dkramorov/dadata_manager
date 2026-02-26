@@ -5,11 +5,7 @@ import re
 import requests
 import time
 
-from envparse import env
 from managers.simple_logger import logger
-
-
-env.read_envfile()
 
 
 class MockSettings:
@@ -229,3 +225,46 @@ class DadataManager:
         # Если оба варианта найдены, отдаем их
         return result1 + result2
 
+
+class DadataCacher:
+    """Кэширование данных
+    """
+    updated = None
+    ttl = 60*60*3
+    objs = {}
+    debug = False
+
+    def __init__(self, ttl: int = 60*60*3):
+        self.ttl = ttl
+        self.objs = {}
+
+    def check_expired(self):
+        """Удаление просроченных объектов
+        """
+        now = datetime.datetime.utcnow()
+        expired_before_datetime = now - datetime.timedelta(minutes=self.ttl)
+        self.objs = {k: v for k, v in self.objs.items() if v['updated'] > expired_before_datetime}
+
+    def get_by_number(self, number: str):
+        """Получение по номеру записи из кэша
+           :param number: номер ИНН или ОГРН
+        """
+        self.check_expired()
+        number = str(number)
+        if self.objs.get(number):
+            logger.info('DadataCacher from cache %s' % number)
+            return self.objs[number]['data']
+
+        logger.info('DadataCacher request %s' % number)
+        ddm = DadataManager()
+        resp = ddm.get_by_inn_or_ogrn(inn_or_ogrn=number)
+        main_org = ddm.get_main_org_from_suggestions(resp=resp)
+        if main_org:
+            self.objs[number] = {
+                'updated': datetime.datetime.utcnow(),
+                'data': main_org,
+            }
+        return main_org
+
+
+dadata_cacher = DadataCacher()
