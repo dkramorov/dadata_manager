@@ -16,7 +16,6 @@ try:
     from django.conf import settings
     hasattr(settings, 'DEBUG')
 except Exception as e:
-    logger.info('Exception from django.conf import settings: %s' % e)
     settings = MockSettings()
 
 
