@@ -224,6 +224,29 @@ class DadataManager:
         # Если оба варианта найдены, отдаем их
         return result1 + result2
 
+    def get_okved(self, query: str):
+        """Получение ОКВЭД по коду
+           https://dadata.ru/api/suggest/okved2/
+           :param query: запрос, обязательное поле
+                         "query": "77.3"
+        """
+        endpoint = '/suggestions/api/4_1/rs/findById/okved2'
+        url = '%s%s' % (self.host, endpoint)
+        r = requests.post(url, headers=self.get_headers(), json={'query': query})
+        return r.json()
+
+
+    def search_okved(self, query: str):
+        """Поиск ОКВЭД по коду и названию
+           https://dadata.ru/api/suggest/okved2/
+           :param query: запрос, обязательное поле
+                         "query": "77.3"
+        """
+        endpoint = '/suggestions/api/4_1/rs/suggest/okved2'
+        url = '%s%s' % (self.host, endpoint)
+        r = requests.post(url, headers=self.get_headers(), json={'query': query})
+        return r.json()
+
 
 class DadataCacher:
     """Кэширование данных
